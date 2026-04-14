@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+
+# A workspace allows us to manage multiple crates in a single repository.
+# Each member is a separate crate with its own Cargo.toml.
+members = [
+    "crates/if_common",
+    "crates/if_world",
+    "crates/if_factory",
+    "crates/if_client",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Developer"]
+description = "A single-shard MMO industrial automation simulator"
+
+# Workspace dependencies allow us to define versions in one place.
+# If multiple crates use 'bevy', they will all use the same version.
+[workspace.dependencies]
+bevy = { version = "0.18" }

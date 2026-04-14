@@ -1,0 +1,12 @@
+[package]
+name = "if_client"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Bevy client application: rendering, UI, input"
+
+[dependencies]
+bevy = { workspace = true }
+if_common = { path = "../if_common" }
+if_world = { path = "../if_world" }
+if_factory = { path = "../if_factory" }

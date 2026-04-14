@@ -1,0 +1,9 @@
+[package]
+name = "if_common"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Shared types, components, and constants for Infinite Flux"
+
+[dependencies]
+bevy = { workspace = true }

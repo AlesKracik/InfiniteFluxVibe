@@ -1,0 +1,10 @@
+[package]
+name = "if_factory"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Factory mechanics: transport lines, machines, recipes, production"
+
+[dependencies]
+bevy = { workspace = true }
+if_common = { path = "../if_common" }
