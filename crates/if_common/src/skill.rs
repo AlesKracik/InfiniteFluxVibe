@@ -4,6 +4,8 @@
 // so new players ramp up quickly and veterans plateau. This keeps the
 // power gap small and encourages breadth over deep specialization.
 
+use bevy::prelude::*;
+use std::collections::HashMap;
 use std::fmt;
 
 /// Every distinct skill in the game.
@@ -32,14 +34,6 @@ impl fmt::Display for SkillType {
 }
 
 /// A skill level — newtype wrapper around u32.
-///
-/// **Rust concept — the newtype pattern:**
-/// `SkillLevel` is a struct with a single field. It behaves like a u32
-/// but is a distinct type. This means:
-///   - You can't accidentally pass a raw u32 where a SkillLevel is expected
-///   - You can't mix up SkillLevel with other u32-based types
-///   - The bonus calculation is encapsulated — callers use `.bonus()`,
-///     they don't do the math themselves
 ///
 /// The inner value represents accumulated experience points. The "level"
 /// and "bonus" are derived from this value through the diminishing
@@ -96,6 +90,36 @@ impl fmt::Display for SkillLevel {
     /// Shows as "Lv.5 (1.23x)" — level and current bonus.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Lv.{} ({:.2}x)", self.level(), self.bonus())
+    }
+}
+
+/// Tracks a player's skill levels across all skill types.
+///
+/// Used as a Bevy `Resource` for single-player. Will be refactored to
+/// a per-player `Component` when multiplayer is added.
+#[derive(Resource, Clone, Debug, Default)]
+pub struct PlayerSkills {
+    skills: HashMap<SkillType, SkillLevel>,
+}
+
+impl PlayerSkills {
+    /// Get the bonus multiplier for a given skill type.
+    /// Returns 1.0 (baseline) if the skill has never been used.
+    pub fn get_bonus(&self, skill_type: SkillType) -> f32 {
+        self.skills
+            .get(&skill_type)
+            .map_or(1.0, |level| level.bonus())
+    }
+
+    /// Add XP to a skill type.
+    pub fn add_xp(&mut self, skill_type: SkillType, amount: u32) {
+        self.skills.entry(skill_type).or_default().add_xp(amount);
+    }
+
+    /// Get the current skill level for a skill type.
+    /// Returns a default (0 XP) level if the skill has never been used.
+    pub fn get_level(&self, skill_type: SkillType) -> SkillLevel {
+        self.skills.get(&skill_type).copied().unwrap_or_default()
     }
 }
 
@@ -169,5 +193,44 @@ mod tests {
             ratio >= 0.7,
             "Level 50 should be >=70% of level 100, got {ratio:.2} ({mid:.2} / {top:.2})"
         );
+    }
+
+    // --- PlayerSkills tests ---
+
+    #[test]
+    fn player_skills_default_bonus_is_one() {
+        let skills = PlayerSkills::default();
+        assert_eq!(skills.get_bonus(SkillType::Mining), 1.0);
+        assert_eq!(skills.get_bonus(SkillType::Smelting), 1.0);
+    }
+
+    #[test]
+    fn player_skills_add_xp_and_get_level() {
+        let mut skills = PlayerSkills::default();
+        skills.add_xp(SkillType::Mining, 250);
+        assert_eq!(skills.get_level(SkillType::Mining).xp(), 250);
+        assert_eq!(skills.get_level(SkillType::Mining).level(), 2);
+        // Smelting should still be at 0
+        assert_eq!(skills.get_level(SkillType::Smelting).level(), 0);
+    }
+
+    #[test]
+    fn player_skills_bonus_increases_with_xp() {
+        let mut skills = PlayerSkills::default();
+        let before = skills.get_bonus(SkillType::Fabrication);
+        skills.add_xp(SkillType::Fabrication, 400); // level 4
+        let after = skills.get_bonus(SkillType::Fabrication);
+        assert!(after > before, "Bonus should increase: {before} -> {after}");
+        // Level 4 bonus = 1.0 + sqrt(4) = 3.0
+        assert!((after - 3.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn player_skills_accumulate_xp() {
+        let mut skills = PlayerSkills::default();
+        skills.add_xp(SkillType::Logistics, 50);
+        skills.add_xp(SkillType::Logistics, 60);
+        assert_eq!(skills.get_level(SkillType::Logistics).xp(), 110);
+        assert_eq!(skills.get_level(SkillType::Logistics).level(), 1);
     }
 }

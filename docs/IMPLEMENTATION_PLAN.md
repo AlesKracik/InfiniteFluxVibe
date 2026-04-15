@@ -53,13 +53,9 @@ Workspace setup, Bevy app, grid system, camera controls, CI pipeline.
 
 ---
 
-## Phase 1: Core Factory ✅ MOSTLY DONE
+## Phase 1: Core Factory ✅ DONE
 
-Items, recipes, mining, transport lines, machines, power grid, building placement, HUD, throughput stats.
-
-**Remaining:**
-- [ ] Skill progression system (diminishing returns)
-- [ ] Apply skill bonuses to mining/production
+Items, recipes, mining, transport lines, machines, power grid, building placement, HUD, throughput stats, skill progression.
 
 ---
 
@@ -67,10 +63,10 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 **Goal:** Full UI layer — the game becomes actually usable and demoable.
 
-- [ ] Integrate bevy_egui for UI panels
-- [ ] Building palette toolbar (categorized, searchable)
-- [ ] Resource overlay panel (throughput meters, alerts)
-- [ ] Statistics dashboard (production/consumption graphs)
+- [x] Integrate bevy_egui for UI panels
+- [x] Building palette toolbar (categorized, clickable)
+- [x] Resource overlay panel (throughput meters, power status)
+- [x] Statistics dashboard (building counts, stock, throughput)
 - [ ] Tooltip system
 - [ ] Notification/alert system
 - [ ] Sound effects

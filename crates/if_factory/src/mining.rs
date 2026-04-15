@@ -6,6 +6,7 @@
 use bevy::prelude::*;
 
 use if_common::item::ItemType;
+use if_common::skill::{PlayerSkills, SkillType};
 
 use crate::inventory::Inventory;
 use crate::power::PowerGrid;
@@ -59,22 +60,21 @@ impl MiningDrill {
     }
 }
 
+/// XP granted per item successfully mined.
+const MINING_XP_PER_ITEM: u32 = 5;
+
 /// System: mining drills extract items from resource nodes.
 ///
-/// This is a Bevy system — it runs every FixedUpdate tick. Look at the
-/// function signature:
-///
-/// - `drill_q`: all entities that have both a MiningDrill and an Inventory
-/// - `node_q`: all entities that have a ResourceNode
-///
-/// Bevy's ECS scheduler sees these parameter types and knows which component
-/// storage to access. It also knows that drill_q borrows Inventory mutably
-/// and node_q borrows ResourceNode mutably, so it can parallelize correctly.
+/// Extraction rate is scaled by power availability and the player's
+/// Mining skill bonus. XP is granted for each item successfully extracted.
 pub fn mining_system(
     mut drill_q: Query<(&mut MiningDrill, &mut Inventory)>,
     mut node_q: Query<&mut ResourceNode>,
     power_grid: Res<PowerGrid>,
+    mut player_skills: ResMut<PlayerSkills>,
 ) {
+    let mining_bonus = player_skills.get_bonus(SkillType::Mining);
+
     for (mut drill, mut inventory) in &mut drill_q {
         // Look up the resource node this drill is mining from.
         // `get_mut` returns Result — the node might not exist (deleted, etc.)
@@ -86,10 +86,9 @@ pub fn mining_system(
             continue;
         }
 
-        // Accumulate fractional progress, scaled by power availability.
-        // At full power (1.0) this is unchanged. At half power (0.5),
-        // drills mine at half speed.
-        drill.extraction_progress += node.yield_per_tick * power_grid.power_ratio;
+        // Accumulate fractional progress, scaled by power availability and
+        // the player's Mining skill bonus.
+        drill.extraction_progress += node.yield_per_tick * power_grid.power_ratio * mining_bonus;
 
         // Extract the integer part in one go — no loop needed.
         // `as u32` truncates toward zero, giving us the whole items.
@@ -98,6 +97,11 @@ pub fn mining_system(
             let added = inventory.try_add(node.resource, whole_items);
             drill.extraction_progress -= added as f32;
             node.remaining -= added;
+
+            // Grant Mining XP for items successfully extracted.
+            if added > 0 {
+                player_skills.add_xp(SkillType::Mining, added * MINING_XP_PER_ITEM);
+            }
 
             if added < whole_items {
                 // Inventory couldn't fit everything — cap progress so it
@@ -122,6 +126,8 @@ mod tests {
     ) -> (Entity, Entity) {
         // Insert PowerGrid with full power so existing tests behave unchanged.
         world.insert_resource(PowerGrid::default());
+        // Insert PlayerSkills with default (no XP) so existing tests work.
+        world.insert_resource(PlayerSkills::default());
 
         let node_entity = world
             .spawn(ResourceNode {
@@ -143,8 +149,6 @@ mod tests {
         let mut world = World::new();
         let (_, drill_entity) = setup_drill_and_node(&mut world, 100, 0.5, 50);
 
-        // Run the system manually — this is how you unit test Bevy systems.
-        // We create a schedule with just our system and run it.
         let mut schedule = Schedule::default();
         schedule.add_systems(mining_system);
 
@@ -197,5 +201,56 @@ mod tests {
 
         let node = world.get::<ResourceNode>(node_entity).unwrap();
         assert!(node.is_depleted());
+    }
+
+    #[test]
+    fn mining_grants_xp() {
+        let mut world = World::new();
+        // yield 10.0 per tick => extracts 10 items on first tick
+        let (_, _) = setup_drill_and_node(&mut world, 100, 10.0, 50);
+
+        let mut schedule = Schedule::default();
+        schedule.add_systems(mining_system);
+        schedule.run(&mut world);
+
+        let skills = world.resource::<PlayerSkills>();
+        // 10 items * 5 XP each = 50 XP
+        assert_eq!(skills.get_level(SkillType::Mining).xp(), 50);
+    }
+
+    #[test]
+    fn mining_skill_bonus_speeds_extraction() {
+        let mut world = World::new();
+        world.insert_resource(PowerGrid::default());
+        // Pre-level the player's mining skill to level 4 (bonus = 3.0)
+        let mut skills = PlayerSkills::default();
+        skills.add_xp(SkillType::Mining, 400); // 4 levels
+        world.insert_resource(skills);
+
+        let node_entity = world
+            .spawn(ResourceNode {
+                resource: ItemType::CopperOre,
+                yield_per_tick: 0.5,
+                remaining: 100,
+            })
+            .id();
+
+        let drill_entity = world
+            .spawn((MiningDrill::new(node_entity), Inventory::new(50)))
+            .id();
+
+        let mut schedule = Schedule::default();
+        schedule.add_systems(mining_system);
+
+        // With bonus 3.0, effective yield = 0.5 * 3.0 = 1.5 per tick.
+        // After 1 tick: progress 1.5, extract 1 item, progress 0.5
+        schedule.run(&mut world);
+        let inv = world.get::<Inventory>(drill_entity).unwrap();
+        assert_eq!(inv.count(ItemType::CopperOre), 1);
+
+        // After 2 ticks: progress 0.5 + 1.5 = 2.0, extract 2 items
+        schedule.run(&mut world);
+        let inv = world.get::<Inventory>(drill_entity).unwrap();
+        assert_eq!(inv.count(ItemType::CopperOre), 3);
     }
 }

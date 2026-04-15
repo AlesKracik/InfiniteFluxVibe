@@ -7,7 +7,9 @@
 use bevy::prelude::*;
 
 use if_common::recipe::Recipe;
+use if_common::skill::{PlayerSkills, SkillType};
 
+use crate::building::{Building, BuildingType};
 use crate::inventory::Inventory;
 use crate::power::PowerGrid;
 
@@ -21,12 +23,6 @@ use crate::power::PowerGrid;
 /// The machine checks if inputs are available, consumes them, waits, then
 /// adds outputs. A more complex design would split input/output inventories
 /// but that adds complexity we don't need yet.
-///
-/// **Rust concept — ownership of Recipe:** The Machine *owns* its Recipe
-/// (it's a cloned copy, not a reference). This avoids lifetime issues —
-/// the recipe data lives as long as the machine entity. The cost is a
-/// small heap allocation for the Recipe's Strings/Vecs, but machines are
-/// few (hundreds, not millions).
 #[derive(Component, Debug)]
 pub struct Machine {
     pub recipe: Recipe,
@@ -63,23 +59,41 @@ impl Machine {
     }
 }
 
+/// XP granted per completed production cycle.
+const PRODUCTION_XP_PER_CYCLE: u32 = 10;
+
+/// Map a building type to the skill it uses. Returns None for buildings
+/// that don't have an associated production skill.
+fn skill_for_building(building_type: BuildingType) -> Option<SkillType> {
+    match building_type {
+        BuildingType::Smelter => Some(SkillType::Smelting),
+        BuildingType::Assembler => Some(SkillType::Fabrication),
+        _ => None,
+    }
+}
+
 /// System: machines consume inputs, process, and produce outputs.
 ///
 /// State machine per machine entity each tick:
-///   1. If processing: decrement timer. If done, try to output results.
+///   1. If processing: decrement timer (scaled by skill bonus). If done, try to output results.
 ///   2. If idle: check if inputs are available. If so, consume them and start.
 pub fn production_system(
-    mut machine_q: Query<(&mut Machine, &mut Inventory)>,
+    mut machine_q: Query<(&mut Machine, &mut Inventory, Option<&Building>)>,
     power_grid: Res<PowerGrid>,
+    mut player_skills: ResMut<PlayerSkills>,
 ) {
-    for (mut machine, mut inventory) in &mut machine_q {
+    for (mut machine, mut inventory, building) in &mut machine_q {
+        // Determine skill bonus based on building type.
+        let skill_type = building.and_then(|b| skill_for_building(b.building_type));
+        let skill_bonus = skill_type.map_or(1.0, |st| player_skills.get_bonus(st));
+
         if machine.is_processing {
             // --- Currently processing ---
             if machine.processing_ticks_remaining > 0 {
-                // Accumulate fractional progress based on power availability.
-                // At full power, one tick elapses per frame. At half power,
-                // it takes two frames per tick.
-                machine.tick_progress += power_grid.power_ratio;
+                // Accumulate fractional progress based on power availability
+                // and the player's relevant skill bonus. Higher skill = faster
+                // processing.
+                machine.tick_progress += power_grid.power_ratio * skill_bonus;
                 while machine.tick_progress >= 1.0 && machine.processing_ticks_remaining > 0 {
                     machine.processing_ticks_remaining -= 1;
                     machine.tick_progress -= 1.0;
@@ -98,6 +112,11 @@ pub fn production_system(
                     inventory.try_add_stack(*output);
                 }
                 machine.is_processing = false;
+
+                // Grant XP for the relevant skill on completion.
+                if let Some(st) = skill_type {
+                    player_skills.add_xp(st, PRODUCTION_XP_PER_CYCLE);
+                }
             }
             // If not enough space, stay in "done but blocked" state.
             // Will retry next tick.
@@ -118,10 +137,11 @@ mod tests {
     use bevy::ecs::world::World;
     use if_common::item::{ItemStack, ItemType};
 
-    /// Helper: create a world with full power.
+    /// Helper: create a world with full power and default player skills.
     fn world_with_power() -> World {
         let mut world = World::new();
         world.insert_resource(PowerGrid::default());
+        world.insert_resource(PlayerSkills::default());
         world
     }
 
@@ -228,5 +248,141 @@ mod tests {
         // 2/3 complete
         let expected = 1.0 - (1.0 / 3.0);
         assert!((machine.progress_fraction() - expected).abs() < 0.01);
+    }
+
+    #[test]
+    fn smelter_grants_smelting_xp() {
+        let mut world = world_with_power();
+
+        let mut inv = Inventory::new(100);
+        inv.try_add(ItemType::CopperOre, 5);
+
+        world.spawn((
+            Machine::new(copper_smelting_recipe()),
+            inv,
+            Building {
+                building_type: BuildingType::Smelter,
+            },
+        ));
+
+        let mut schedule = Schedule::default();
+        schedule.add_systems(production_system);
+
+        // 4 ticks to complete one cycle (1 start + 3 processing)
+        for _ in 0..4 {
+            schedule.run(&mut world);
+        }
+
+        let skills = world.resource::<PlayerSkills>();
+        assert_eq!(
+            skills.get_level(SkillType::Smelting).xp(),
+            PRODUCTION_XP_PER_CYCLE
+        );
+        // Fabrication should be untouched
+        assert_eq!(skills.get_level(SkillType::Fabrication).xp(), 0);
+    }
+
+    #[test]
+    fn assembler_grants_fabrication_xp() {
+        let mut world = world_with_power();
+
+        let assembly_recipe = Recipe::new(
+            "Test Assembly",
+            vec![ItemStack::new(ItemType::IronPlate, 1)],
+            vec![ItemStack::new(ItemType::BasicCircuit, 1)],
+            2, // 2 ticks
+        );
+
+        let mut inv = Inventory::new(100);
+        inv.try_add(ItemType::IronPlate, 5);
+
+        world.spawn((
+            Machine::new(assembly_recipe),
+            inv,
+            Building {
+                building_type: BuildingType::Assembler,
+            },
+        ));
+
+        let mut schedule = Schedule::default();
+        schedule.add_systems(production_system);
+
+        // 3 ticks to complete one cycle (1 start + 2 processing)
+        for _ in 0..3 {
+            schedule.run(&mut world);
+        }
+
+        let skills = world.resource::<PlayerSkills>();
+        assert_eq!(
+            skills.get_level(SkillType::Fabrication).xp(),
+            PRODUCTION_XP_PER_CYCLE
+        );
+    }
+
+    #[test]
+    fn smelting_skill_speeds_production() {
+        let mut world = World::new();
+        world.insert_resource(PowerGrid::default());
+
+        // Pre-level smelting to level 1 (bonus = 2.0 = double speed)
+        let mut skills = PlayerSkills::default();
+        skills.add_xp(SkillType::Smelting, 100);
+        world.insert_resource(skills);
+
+        let mut inv = Inventory::new(100);
+        inv.try_add(ItemType::CopperOre, 5);
+
+        world.spawn((
+            Machine::new(copper_smelting_recipe()), // 3 processing ticks
+            inv,
+            Building {
+                building_type: BuildingType::Smelter,
+            },
+        ));
+
+        let mut schedule = Schedule::default();
+        schedule.add_systems(production_system);
+
+        // At 2x speed: tick 1 = start (consume input, set remaining=3).
+        // tick 2: progress += 2.0, consume 2 ticks (remaining=1).
+        // tick 3: progress += 2.0, consume 1 tick (remaining=0), output.
+        // So only 3 ticks instead of 4.
+        for _ in 0..3 {
+            schedule.run(&mut world);
+        }
+
+        let mut query = world.query::<&Inventory>();
+        let inv = query.single(&world).unwrap();
+        assert_eq!(inv.count(ItemType::CopperIngot), 1);
+        assert_eq!(inv.count(ItemType::CopperOre), 4);
+    }
+
+    #[test]
+    fn machine_without_building_uses_baseline_speed() {
+        // Machines without a Building component should still work at 1.0x speed.
+        let mut world = world_with_power();
+
+        let mut inv = Inventory::new(100);
+        inv.try_add(ItemType::CopperOre, 5);
+
+        // No Building component
+        world.spawn((Machine::new(copper_smelting_recipe()), inv));
+
+        let mut schedule = Schedule::default();
+        schedule.add_systems(production_system);
+
+        // Standard 4 ticks
+        for _ in 0..4 {
+            schedule.run(&mut world);
+        }
+
+        let mut query = world.query::<&Inventory>();
+        let inv = query.single(&world).unwrap();
+        assert_eq!(inv.count(ItemType::CopperIngot), 1);
+
+        // No XP should be granted (no building type)
+        let skills = world.resource::<PlayerSkills>();
+        assert_eq!(skills.get_level(SkillType::Smelting).xp(), 0);
+        assert_eq!(skills.get_level(SkillType::Fabrication).xp(), 0);
     }
 }

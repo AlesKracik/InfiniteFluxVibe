@@ -13,22 +13,25 @@ pub mod stats;
 pub mod transport;
 
 use bevy::prelude::*;
+use if_common::skill::PlayerSkills;
 
 /// The Bevy plugin that registers all factory simulation systems.
 pub struct FactoryPlugin;
 
 impl Plugin for FactoryPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<power::PowerGrid>().add_systems(
-            FixedUpdate,
-            (
-                power::power_system,
-                mining::mining_system,
-                transport::transport_system,
-                production::production_system,
-                stats::throughput_tracking_system,
-            )
-                .chain(),
-        );
+        app.init_resource::<power::PowerGrid>()
+            .init_resource::<PlayerSkills>()
+            .add_systems(
+                FixedUpdate,
+                (
+                    power::power_system,
+                    mining::mining_system,
+                    transport::transport_system,
+                    production::production_system,
+                    stats::throughput_tracking_system,
+                )
+                    .chain(),
+            );
     }
 }

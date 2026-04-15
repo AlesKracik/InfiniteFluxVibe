@@ -8,14 +8,17 @@ mod camera;
 mod grid_renderer;
 mod hud;
 mod placement;
+mod ui_panels;
 mod world_setup;
 
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
+use bevy_egui::EguiPlugin;
 use if_factory::FactoryPlugin;
 use if_factory::building::BuildingMap;
 use if_world::WorldPlugin;
 use placement::BuildingPlacement;
+use ui_panels::EguiWantsPointer;
 
 fn main() {
     App::new()
@@ -30,11 +33,13 @@ fn main() {
         // Game plugins
         .add_plugins(WorldPlugin)
         .add_plugins(FactoryPlugin)
+        .add_plugins(EguiPlugin::default())
         // Resources
         .init_resource::<BuildingPlacement>()
         .init_resource::<BuildingMap>()
         .init_resource::<placement::TransportLinePlacement>()
         .init_resource::<placement::ShowStats>()
+        .init_resource::<EguiWantsPointer>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -63,6 +68,10 @@ fn main() {
                 building_labels::spawn_building_labels,
                 building_labels::update_building_labels,
                 building_labels::cleanup_orphaned_labels,
+                // egui panels
+                ui_panels::building_palette_panel,
+                ui_panels::resource_overview_panel,
+                ui_panels::statistics_dashboard,
             ),
         )
         .run();

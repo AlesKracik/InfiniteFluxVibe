@@ -19,6 +19,7 @@ use if_factory::transport::TransportLine;
 use if_world::grid::Grid;
 
 use crate::camera::GameCamera;
+use crate::ui_panels::EguiWantsPointer;
 
 /// Marker component for the ghost preview sprite.
 #[derive(Component)]
@@ -240,7 +241,13 @@ pub fn placement_click_system(
     // For finding and removing transport lines connected to a removed building:
     transport_line_q: Query<(Entity, &TransportLine)>,
     transport_visual_q: Query<(Entity, &TransportLineVisual)>,
+    egui_wants: Res<EguiWantsPointer>,
 ) {
+    // Don't process clicks when egui panels want the pointer
+    if egui_wants.0 {
+        return;
+    }
+
     let Ok(window) = window_q.single() else {
         return;
     };
