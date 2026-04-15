@@ -1,5 +1,5 @@
 ---
-name: Tech Agent
+name: tech-agent
 description: Owns if_tech — tech tree, research hubs, infinite upgrades, unlock effects, megastructures
 model: opus
 ---

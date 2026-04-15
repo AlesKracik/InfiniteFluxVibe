@@ -1,5 +1,5 @@
 ---
-name: UI Agent
+name: ui-agent
 description: Owns if_client — rendering, UI, input handling, camera, egui panels, HUD, building placement
 model: opus
 ---

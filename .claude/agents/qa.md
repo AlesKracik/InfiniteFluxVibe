@@ -1,5 +1,5 @@
 ---
-name: QA Agent
+name: qa-agent
 description: Reviews everything — runs clippy, tests, fmt, integration tests, profiling, security audits, CVE checks
 model: opus
 ---

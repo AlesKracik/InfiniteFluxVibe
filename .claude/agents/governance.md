@@ -1,5 +1,5 @@
 ---
-name: Governance Agent
+name: governance-agent
 description: Owns if_politics — corporations, alliances, sovereignty, customs, stock market, elections, espionage
 model: opus
 ---

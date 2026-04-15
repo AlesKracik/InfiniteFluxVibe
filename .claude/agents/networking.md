@@ -1,5 +1,5 @@
 ---
-name: Networking Agent
+name: networking-agent
 description: Owns if_protocol, if_server — async networking, client-server architecture, database persistence, auth
 model: opus
 ---

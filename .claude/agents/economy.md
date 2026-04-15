@@ -1,5 +1,5 @@
 ---
-name: Economy Agent
+name: economy-agent
 description: Owns if_economy — order book matching, market data, credits, contracts, corporation finance, banking
 model: opus
 ---

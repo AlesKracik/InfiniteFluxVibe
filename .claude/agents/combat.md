@@ -1,5 +1,5 @@
 ---
-name: Combat Agent
+name: combat-agent
 description: Owns if_combat — ship fitting, damage model, targeting, fleet mechanics, NPC AI, heat/capacitor systems
 model: opus
 ---

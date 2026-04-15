@@ -1,5 +1,5 @@
 ---
-name: Simulation Agent
+name: simulation-agent
 description: Owns if_common, if_world, if_factory — core types, grid, world gen, factory mechanics, simulation tick systems
 model: opus
 ---
