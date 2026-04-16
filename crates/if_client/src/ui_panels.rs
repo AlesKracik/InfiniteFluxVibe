@@ -78,7 +78,14 @@ pub fn building_palette_panel(
     mut contexts: EguiContexts,
     mut selected: ResMut<BuildingPlacement>,
     mut egui_wants: ResMut<EguiWantsPointer>,
+    mut warmup: Local<u8>,
 ) {
+    // Skip early frames — egui's begin_pass may not have run yet
+    // when the window is first created.
+    if *warmup < 3 {
+        *warmup += 1;
+        return;
+    }
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
@@ -146,7 +153,12 @@ pub fn resource_overview_panel(
     inventory_q: Query<&Inventory>,
     throughput_q: Query<(&ThroughputTracker, &Building)>,
     mut egui_wants: ResMut<EguiWantsPointer>,
+    mut warmup: Local<u8>,
 ) {
+    if *warmup < 3 {
+        *warmup += 1;
+        return;
+    }
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
@@ -246,6 +258,7 @@ pub fn resource_overview_panel(
 }
 
 /// System: render the statistics dashboard, toggled with Tab.
+#[allow(clippy::too_many_arguments)]
 pub fn statistics_dashboard(
     mut contexts: EguiContexts,
     show_stats: Res<ShowStats>,
@@ -254,7 +267,12 @@ pub fn statistics_dashboard(
     inventory_q: Query<&Inventory>,
     throughput_q: Query<(&ThroughputTracker, &Building)>,
     mut egui_wants: ResMut<EguiWantsPointer>,
+    mut warmup: Local<u8>,
 ) {
+    if *warmup < 3 {
+        *warmup += 1;
+        return;
+    }
     if !show_stats.0 {
         return;
     }
