@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy_egui::{EguiContexts, egui};
 
 use if_common::item::ItemType;
+use if_common::skill::{PlayerSkills, SkillType};
 use if_factory::building::{Building, BuildingType};
 use if_factory::inventory::Inventory;
 use if_factory::power::PowerGrid;
@@ -147,9 +148,11 @@ pub fn building_palette_panel(
 
 /// System: render the resource overview panel on the right side.
 /// Shows aggregate inventory counts, power status, and throughput.
+#[allow(clippy::too_many_arguments)]
 pub fn resource_overview_panel(
     mut contexts: EguiContexts,
     power_grid: Res<PowerGrid>,
+    player_skills: Res<PlayerSkills>,
     inventory_q: Query<&Inventory>,
     throughput_q: Query<(&ThroughputTracker, &Building)>,
     mut egui_wants: ResMut<EguiWantsPointer>,
@@ -251,6 +254,30 @@ pub fn resource_overview_panel(
             }
             if !has_throughput {
                 ui.label("No activity");
+            }
+
+            ui.add_space(10.0);
+
+            // --- Skills ---
+            ui.heading("Skills");
+            ui.separator();
+
+            let all_skills = [
+                SkillType::Mining,
+                SkillType::Smelting,
+                SkillType::Fabrication,
+                SkillType::Logistics,
+            ];
+
+            for skill_type in all_skills {
+                let level = player_skills.get_level(skill_type);
+                ui.horizontal(|ui| {
+                    ui.label(format!("{skill_type}:"));
+                    ui.label(
+                        egui::RichText::new(format!("{level}"))
+                            .color(egui::Color32::from_rgb(180, 220, 255)),
+                    );
+                });
             }
         });
 

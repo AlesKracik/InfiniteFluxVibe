@@ -5,17 +5,18 @@
 // machines slow down proportionally.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 /// Component for buildings that consume power (drills, machines).
 /// `demand` is the power units required per tick at full speed.
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct PowerConsumer {
     pub demand: f32,
 }
 
 /// Component for buildings that generate power.
 /// `output` is the power units produced per tick.
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct PowerGenerator {
     pub output: f32,
 }

@@ -5,6 +5,7 @@
 // is full, the machine stalls (backpressure).
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use if_common::recipe::Recipe;
 use if_common::skill::{PlayerSkills, SkillType};
@@ -23,7 +24,7 @@ use crate::power::PowerGrid;
 /// The machine checks if inputs are available, consumes them, waits, then
 /// adds outputs. A more complex design would split input/output inventories
 /// but that adds complexity we don't need yet.
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Serialize, Deserialize)]
 pub struct Machine {
     pub recipe: Recipe,
     processing_ticks_remaining: u32,
@@ -45,6 +46,31 @@ impl Machine {
 
     pub fn is_processing(&self) -> bool {
         self.is_processing
+    }
+
+    /// Get the remaining processing ticks (for save/load).
+    pub fn processing_ticks_remaining(&self) -> u32 {
+        self.processing_ticks_remaining
+    }
+
+    /// Get the tick progress accumulator (for save/load).
+    pub fn tick_progress(&self) -> f32 {
+        self.tick_progress
+    }
+
+    /// Create a machine with restored processing state (for loading).
+    pub fn with_state(
+        recipe: Recipe,
+        processing_ticks_remaining: u32,
+        tick_progress: f32,
+        is_processing: bool,
+    ) -> Self {
+        Self {
+            recipe,
+            processing_ticks_remaining,
+            tick_progress,
+            is_processing,
+        }
     }
 
     pub fn progress_fraction(&self) -> f32 {

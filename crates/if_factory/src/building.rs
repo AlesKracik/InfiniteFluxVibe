@@ -9,6 +9,7 @@
 
 use bevy::prelude::*;
 use if_common::GridPosition;
+use serde::{Deserialize, Serialize};
 
 /// Enum of all building types the player can place.
 ///
@@ -18,7 +19,7 @@ use if_common::GridPosition;
 ///
 /// Each variant will correspond to a specific set of ECS components
 /// that get attached when the building is spawned.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum BuildingType {
     MiningDrill,
     TransportLine,
@@ -41,7 +42,7 @@ impl std::fmt::Display for BuildingType {
 
 /// Component that marks an entity as a placed building.
 /// Stores what type it is so we can query all buildings generically.
-#[derive(Component, Clone, Copy, Debug)]
+#[derive(Component, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Building {
     pub building_type: BuildingType,
 }

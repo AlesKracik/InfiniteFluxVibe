@@ -4,6 +4,7 @@
 // transported, processed, and traded is an Item.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// Every distinct material or product in the game.
@@ -14,7 +15,7 @@ use std::fmt;
 ///
 /// `Hash` is derived so we can use ItemType as a HashMap key (for inventories,
 /// recipe lookups, etc.).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ItemType {
     // --- Raw ores (extracted from resource nodes) ---
     CopperOre,
@@ -80,7 +81,7 @@ impl ItemType {
 ///
 /// We use `u32` for quantity because items are discrete (no half-items)
 /// and never negative.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ItemStack {
     pub item: ItemType,
     pub quantity: u32,

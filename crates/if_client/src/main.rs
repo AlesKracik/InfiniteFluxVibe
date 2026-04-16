@@ -7,7 +7,10 @@ mod building_labels;
 mod camera;
 mod grid_renderer;
 mod hud;
+mod notifications;
 mod placement;
+mod save_load;
+mod tooltips;
 mod ui_panels;
 mod world_setup;
 
@@ -40,6 +43,7 @@ fn main() {
         .init_resource::<placement::TransportLinePlacement>()
         .init_resource::<placement::ShowStats>()
         .init_resource::<EguiWantsPointer>()
+        .init_resource::<notifications::Notifications>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -72,6 +76,15 @@ fn main() {
                 ui_panels::building_palette_panel,
                 ui_panels::resource_overview_panel,
                 ui_panels::statistics_dashboard,
+                // tooltips and notifications
+                tooltips::building_tooltip_system,
+                notifications::notification_display_system,
+                notifications::notify_building_placed,
+                notifications::notify_resource_depleted,
+                notifications::notify_power_shortage,
+                // save/load
+                save_load::save_system,
+                save_load::load_system,
             ),
         )
         .run();

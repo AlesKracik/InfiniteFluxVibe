@@ -67,10 +67,10 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 - [x] Building palette toolbar (categorized, clickable)
 - [x] Resource overlay panel (throughput meters, power status)
 - [x] Statistics dashboard (building counts, stock, throughput)
-- [ ] Tooltip system
-- [ ] Notification/alert system
+- [x] Tooltip system (building hover details)
+- [x] Notification/alert system (placement, depletion, power alerts)
 - [ ] Sound effects
-- [ ] Save/load (Serde + Bincode)
+- [x] Save/load (Serde + Bincode, F5/F9)
 - [ ] Blueprint system (copy/paste factory layouts)
 - [ ] Tutorial sequence
 

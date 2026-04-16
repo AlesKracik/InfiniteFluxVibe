@@ -5,6 +5,7 @@
 
 use bevy::prelude::*;
 use if_common::item::{ItemStack, ItemType};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// A container that holds items, attached as a component to building entities.
@@ -17,7 +18,7 @@ use std::collections::HashMap;
 /// it stops producing, which stalls the transport line feeding it, which
 /// eventually stalls the drill. This emergent behavior is the core of
 /// factory optimization gameplay.
-#[derive(Component, Clone, Debug, Default)]
+#[derive(Component, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Inventory {
     items: HashMap<ItemType, u32>,
     pub capacity: u32,

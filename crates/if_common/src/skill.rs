@@ -5,6 +5,7 @@
 // power gap small and encourages breadth over deep specialization.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 
@@ -14,7 +15,7 @@ use std::fmt;
 /// running a smelter improves Smelting, etc. There's no formal
 /// occupation system; your "occupation" is just whichever skills
 /// you've invested the most time in.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SkillType {
     Mining,
     Smelting,
@@ -38,7 +39,7 @@ impl fmt::Display for SkillType {
 /// The inner value represents accumulated experience points. The "level"
 /// and "bonus" are derived from this value through the diminishing
 /// returns formula.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct SkillLevel(u32);
 
 /// How many XP points constitute one "level" for display purposes.
@@ -97,9 +98,21 @@ impl fmt::Display for SkillLevel {
 ///
 /// Used as a Bevy `Resource` for single-player. Will be refactored to
 /// a per-player `Component` when multiplayer is added.
-#[derive(Resource, Clone, Debug, Default)]
+#[derive(Resource, Clone, Debug, Default, Serialize, Deserialize)]
 pub struct PlayerSkills {
     skills: HashMap<SkillType, SkillLevel>,
+}
+
+impl PlayerSkills {
+    /// Get a reference to the inner skills map (for serialization).
+    pub fn skills_map(&self) -> &HashMap<SkillType, SkillLevel> {
+        &self.skills
+    }
+
+    /// Create from a skills map (for deserialization).
+    pub fn from_map(skills: HashMap<SkillType, SkillLevel>) -> Self {
+        Self { skills }
+    }
 }
 
 impl PlayerSkills {

@@ -7,7 +7,10 @@ pub mod item;
 pub mod recipe;
 pub mod skill;
 
+pub mod save;
+
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 // --- Grid Constants ---
 
@@ -31,7 +34,7 @@ pub const TILE_SIZE: f32 = 32.0;
 /// `Debug` — lets us print tiles with `{:?}` for debugging.
 /// `PartialEq` — lets us compare tiles with `==`.
 /// `Default` — gives us `TileType::default()` which returns `Empty`.
-#[derive(Clone, Copy, Debug, PartialEq, Default)]
+#[derive(Clone, Copy, Debug, PartialEq, Default, Serialize, Deserialize)]
 pub enum TileType {
     #[default]
     Empty,
@@ -60,7 +63,7 @@ impl TileType {
 ///
 /// We derive `Component` so Bevy's ECS can attach this to entities.
 /// `Hash` lets us use GridPosition as a HashMap key later (for spatial lookups).
-#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Component, Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct GridPosition {
     pub x: u32,
     pub y: u32,

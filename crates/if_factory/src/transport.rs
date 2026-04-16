@@ -6,13 +6,14 @@
 // (transit_ticks), simulating physical distance.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use if_common::item::ItemType;
 
 use crate::inventory::Inventory;
 
 /// A single item in transit on the transport line.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TransitItem {
     pub item: ItemType,
     pub quantity: u32,
@@ -46,6 +47,30 @@ impl TransportLine {
             capacity,
             item_filter: None,
             items_in_transit: Vec::new(),
+        }
+    }
+
+    /// Get the items currently in transit (for save/load).
+    pub fn items_in_transit(&self) -> &[TransitItem] {
+        &self.items_in_transit
+    }
+
+    /// Create a transport line with pre-existing items in transit (for loading).
+    pub fn with_transit_items(
+        source: Entity,
+        destination: Entity,
+        transit_ticks: u32,
+        capacity: u32,
+        item_filter: Option<ItemType>,
+        items_in_transit: Vec<TransitItem>,
+    ) -> Self {
+        Self {
+            source,
+            destination,
+            transit_ticks,
+            capacity,
+            item_filter,
+            items_in_transit,
         }
     }
 

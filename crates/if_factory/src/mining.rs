@@ -4,6 +4,7 @@
 // placed on resource nodes that extract items over time into their inventory.
 
 use bevy::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use if_common::item::ItemType;
 use if_common::skill::{PlayerSkills, SkillType};
@@ -16,7 +17,7 @@ use crate::power::PowerGrid;
 /// `remaining` is the total amount of ore left. When it hits 0, the node
 /// is depleted. `yield_per_tick` is how much a drill extracts each tick
 /// (before skill bonuses).
-#[derive(Component, Clone, Debug)]
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
 pub struct ResourceNode {
     pub resource: ItemType,
     pub yield_per_tick: f32,
@@ -57,6 +58,19 @@ impl MiningDrill {
             target_node,
             extraction_progress: 0.0,
         }
+    }
+
+    /// Create a mining drill with restored state (for loading).
+    pub fn with_progress(target_node: Entity, extraction_progress: f32) -> Self {
+        Self {
+            target_node,
+            extraction_progress,
+        }
+    }
+
+    /// Get the extraction progress (for save/load).
+    pub fn extraction_progress(&self) -> f32 {
+        self.extraction_progress
     }
 }
 

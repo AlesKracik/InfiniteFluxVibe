@@ -21,3 +21,5 @@ description = "A single-shard MMO industrial automation simulator"
 [workspace.dependencies]
 bevy = { version = "0.18" }
 bevy_egui = { version = "0.39" }
+serde = { version = "1", features = ["derive"] }
+bincode = "1"

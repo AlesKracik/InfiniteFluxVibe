@@ -5,6 +5,7 @@
 
 use bevy::prelude::*;
 use if_common::{DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, TileType};
+use serde::{Deserialize, Serialize};
 
 /// The grid resource — holds all tile data for one planetary surface.
 ///
@@ -20,11 +21,32 @@ use if_common::{DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, TileType};
 ///
 /// The tradeoff: we need `index = y * width + x` math everywhere. We wrap
 /// that in methods so callers don't think about it.
-#[derive(Resource)]
+#[derive(Resource, Serialize, Deserialize)]
 pub struct Grid {
     pub width: u32,
     pub height: u32,
     tiles: Vec<TileType>,
+}
+
+impl Grid {
+    /// Get a reference to the raw tiles vector (for serialization).
+    pub fn tiles(&self) -> &[TileType] {
+        &self.tiles
+    }
+
+    /// Create a grid from raw data (for deserialization/loading).
+    pub fn from_raw(width: u32, height: u32, tiles: Vec<TileType>) -> Self {
+        assert_eq!(
+            tiles.len(),
+            (width * height) as usize,
+            "tiles length must match width * height"
+        );
+        Self {
+            width,
+            height,
+            tiles,
+        }
+    }
 }
 
 impl Grid {

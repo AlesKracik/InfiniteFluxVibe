@@ -124,7 +124,7 @@ pub fn building_selection_system(
 /// 2. World → Grid: divide by TILE_SIZE and round to nearest cell
 ///
 /// Returns None if the cursor is off the grid.
-fn cursor_to_grid(
+pub fn cursor_to_grid(
     window: &Window,
     camera_transform: &GlobalTransform,
     camera: &Camera,

@@ -4,6 +4,7 @@
 // these outputs." Machines reference recipes to know what they can make.
 
 use crate::item::{ItemStack, ItemType};
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// A recipe: inputs consumed → outputs produced, with a processing duration.
@@ -14,7 +15,7 @@ use std::fmt;
 ///
 /// `processing_ticks` is in simulation ticks (not real seconds) so the sim
 /// runs at a fixed rate regardless of frame rate.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Recipe {
     pub name: String,
     pub inputs: Vec<ItemStack>,
