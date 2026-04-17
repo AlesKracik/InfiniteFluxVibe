@@ -76,7 +76,7 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 ---
 
-## Phase 3: Planetary Expansion
+## Phase 3: Planetary Expansion ✅ DONE
 
 **Goal:** Multiple planets/moons, orbital view, ships.
 
@@ -86,9 +86,9 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 - [x] Seamless transition: system view → surface view
 - [x] Varying resource distributions per planet
 - [x] Environmental modifiers (gravity, atmosphere, temperature)
-- [ ] Orbital stations
-- [ ] Ship entities + inter-body travel
-- [ ] Cargo transfer (ship ↔ station ↔ surface)
+- [x] Orbital stations
+- [x] Ship entities + inter-body travel (fuel, speed, state machine)
+- [x] Cargo transfer (ship ↔ station ↔ surface)
 
 ---
 

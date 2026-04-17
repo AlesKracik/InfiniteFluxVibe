@@ -13,6 +13,7 @@ mod notifications;
 mod orbital_view;
 mod placement;
 mod save_load;
+mod ship_view;
 mod tooltips;
 mod tutorial;
 mod ui_panels;
@@ -55,6 +56,7 @@ fn main() {
         .init_resource::<orbital_view::ViewMode>()
         .init_resource::<orbital_view::SavedCameras>()
         .init_resource::<orbital_view::CurrentBody>()
+        .init_resource::<ship_view::FleetUiState>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -70,6 +72,9 @@ fn main() {
                     audio::load_sound_effects,
                     orbital_view::spawn_system_visuals,
                 ),
+                // Ship/station spawn must read planet positions, so it runs
+                // after the system visuals exist.
+                ship_view::spawn_ship_and_station_visuals,
             )
                 .chain(),
         )
@@ -146,6 +151,19 @@ fn main() {
                 orbital_view::system_info_panel,
                 orbital_view::system_click_to_visit,
             ),
+        )
+        .add_systems(
+            Update,
+            (
+                // ship / fleet view (System mode only)
+                ship_view::animate_ships,
+                ship_view::animate_stations,
+                ship_view::sync_ship_transforms,
+                ship_view::fleet_panel,
+                ship_view::travel_picker_panel,
+                ship_view::cargo_window,
+            )
+                .chain(),
         )
         .run();
 }

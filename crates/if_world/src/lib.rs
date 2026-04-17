@@ -6,6 +6,7 @@
 pub mod bodies;
 pub mod generation;
 pub mod grid;
+pub mod ships;
 
 use bevy::prelude::*;
 
@@ -23,6 +24,11 @@ impl Plugin for WorldPlugin {
         // system map read the updated `orbit_angle`. Factory systems only
         // care about the currently-viewed body's `Grid`, so they are
         // unaffected by this update.
-        app.add_systems(Update, bodies::orbital_motion_system);
+        app.add_systems(Update, bodies::orbital_motion_system)
+            // Ships/stations live alongside the bodies that anchor them, so
+            // we bundle the `ShipsPlugin` with the core world plugin. Clients
+            // that don't want ship simulation can add `WorldPlugin` only and
+            // skip this by composing their own plugin instead.
+            .add_plugins(ships::ShipsPlugin);
     }
 }

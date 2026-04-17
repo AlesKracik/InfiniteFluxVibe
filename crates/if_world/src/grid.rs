@@ -109,6 +109,7 @@ impl Grid {
 pub fn spawn_star_system(mut commands: Commands) {
     use crate::bodies::{CurrentBody, StarSystem};
     use crate::generation::generate_star_system;
+    use crate::ships::spawn_starter_ships_and_station;
 
     const SYSTEM_SEED: u32 = 42;
 
@@ -118,6 +119,7 @@ pub fn spawn_star_system(mut commands: Commands) {
     let mut star_entity: Option<Entity> = None;
     let mut home_entity: Option<Entity> = None;
     let mut home_grid: Option<Grid> = None;
+    let mut home_name: Option<String> = None;
 
     // Track the most recent planet so moons can be parented to it. Our
     // generator emits planets followed (optionally) by their single moon, so
@@ -140,6 +142,7 @@ pub fn spawn_star_system(mut commands: Commands) {
 
         let mut patched = body;
         patched.parent = parent;
+        let patched_name = patched.name.clone();
 
         let mut cmd = commands.spawn(patched);
         if let Some(s) = surface.as_ref() {
@@ -157,11 +160,20 @@ pub fn spawn_star_system(mut commands: Commands) {
                 if let Some(surface) = surface.as_ref() {
                     home_grid = Some(surface.grid.clone());
                 }
+                home_name = Some(patched_name);
             }
             last_planet_entity = Some(entity);
         }
 
         all_bodies.push(entity);
+    }
+
+    // Spawn starter ships + one orbital station at the home planet. We do
+    // this here (rather than in a separate Startup system) so the ship's
+    // `ShipLocation::Surface(name)` is guaranteed to match a body that
+    // exists in the world from tick 1.
+    if let Some(ref home_name) = home_name {
+        spawn_starter_ships_and_station(&mut commands, home_name);
     }
 
     // Fallback: if for some reason generation didn't produce a home planet
