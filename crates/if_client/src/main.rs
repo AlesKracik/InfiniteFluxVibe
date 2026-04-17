@@ -10,6 +10,7 @@ mod camera;
 mod grid_renderer;
 mod hud;
 mod notifications;
+mod orbital_view;
 mod placement;
 mod save_load;
 mod tooltips;
@@ -51,6 +52,9 @@ fn main() {
         .init_resource::<audio::AudioSettings>()
         .init_resource::<audio::SoundEffects>()
         .init_resource::<tutorial::TutorialState>()
+        .init_resource::<orbital_view::ViewMode>()
+        .init_resource::<orbital_view::SavedCameras>()
+        .init_resource::<orbital_view::CurrentBody>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -64,6 +68,7 @@ fn main() {
                     hud::spawn_hud,
                     blueprint_systems::load_blueprints,
                     audio::load_sound_effects,
+                    orbital_view::spawn_system_visuals,
                 ),
             )
                 .chain(),
@@ -127,6 +132,20 @@ fn main() {
         .add_systems(
             Update,
             (tutorial::tutorial_advance_system, tutorial::tutorial_panel),
+        )
+        .add_systems(
+            Update,
+            (
+                // orbital / system view
+                orbital_view::view_mode_toggle_system,
+                orbital_view::animate_orbits,
+                orbital_view::update_orbital_positions,
+                orbital_view::apply_view_visibility,
+                orbital_view::auto_tag_surface_visuals,
+                orbital_view::system_body_labels,
+                orbital_view::system_info_panel,
+                orbital_view::system_click_to_visit,
+            ),
         )
         .run();
 }

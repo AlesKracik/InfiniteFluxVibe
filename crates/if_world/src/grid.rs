@@ -7,6 +7,8 @@ use bevy::prelude::*;
 use if_common::{DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, TileType};
 use serde::{Deserialize, Serialize};
 
+use crate::bodies::BodyType;
+
 /// The grid resource — holds all tile data for one planetary surface.
 ///
 /// We store tiles in a **flat Vec** with index math: `index = y * width + x`.
@@ -21,7 +23,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// The tradeoff: we need `index = y * width + x` math everywhere. We wrap
 /// that in methods so callers don't think about it.
-#[derive(Resource, Serialize, Deserialize)]
+#[derive(Resource, Clone, Debug, Serialize, Deserialize)]
 pub struct Grid {
     pub width: u32,
     pub height: u32,
@@ -92,30 +94,100 @@ impl Grid {
     }
 }
 
-/// Startup system: creates the grid resource and scatters some resource deposits.
+/// Startup system: generate a star system and install the home planet's grid.
 ///
-/// In Bevy, a "system" is just a function whose parameters are automatically
-/// injected by the ECS scheduler. `Commands` lets us insert resources and
-/// spawn entities. Bevy sees the function signature and knows what to provide.
-pub fn spawn_grid(mut commands: Commands) {
-    let mut grid = Grid::new(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT);
+/// This replaces the old hand-placed `spawn_grid`. We now procedurally generate
+/// a small star system (Sol by default, seed 42 for reproducibility). Each
+/// planet owns its own `PlanetSurface` component; the "home planet" — the
+/// first generated planet — also has its surface mirrored into the top-level
+/// `Grid` resource so all existing rendering/factory systems (which read
+/// `Res<Grid>`) continue to work unchanged.
+///
+/// We also install a `CurrentBody(Entity)` resource pointing at the home
+/// planet's entity, and a `StarSystem` resource holding every entity in the
+/// system (star + planets + moons).
+pub fn spawn_star_system(mut commands: Commands) {
+    use crate::bodies::{CurrentBody, StarSystem};
+    use crate::generation::generate_star_system;
 
-    // Scatter some resource deposits for visual variety.
-    // Later this will be procedural generation — for now, hand-placed.
-    grid.set(5, 5, TileType::CopperDeposit);
-    grid.set(6, 5, TileType::CopperDeposit);
-    grid.set(5, 6, TileType::CopperDeposit);
-    grid.set(10, 10, TileType::IronDeposit);
-    grid.set(11, 10, TileType::IronDeposit);
-    grid.set(10, 11, TileType::IronDeposit);
-    grid.set(20, 3, TileType::Rock);
-    grid.set(21, 3, TileType::Rock);
-    grid.set(20, 4, TileType::Rock);
-    grid.set(21, 4, TileType::Rock);
+    const SYSTEM_SEED: u32 = 42;
 
-    // `insert_resource` makes the Grid available to all systems via `Res<Grid>`.
+    let generated = generate_star_system(SYSTEM_SEED);
+
+    let mut all_bodies: Vec<Entity> = Vec::with_capacity(generated.len());
+    let mut star_entity: Option<Entity> = None;
+    let mut home_entity: Option<Entity> = None;
+    let mut home_grid: Option<Grid> = None;
+
+    // Track the most recent planet so moons can be parented to it. Our
+    // generator emits planets followed (optionally) by their single moon, so
+    // the immediately-preceding planet is always the right parent for a moon.
+    let mut last_planet_entity: Option<Entity> = None;
+
+    for (i, (body, surface)) in generated.into_iter().enumerate() {
+        let is_star = i == 0;
+        let body_type = body.body_type;
+
+        // Decide the parent: star has none; planets have the star; moons have
+        // the most-recent planet.
+        let parent = if is_star {
+            None
+        } else if body_type == BodyType::Moon {
+            last_planet_entity.or(star_entity)
+        } else {
+            star_entity
+        };
+
+        let mut patched = body;
+        patched.parent = parent;
+
+        let mut cmd = commands.spawn(patched);
+        if let Some(s) = surface.as_ref() {
+            cmd.insert(s.clone());
+        }
+        let entity = cmd.id();
+
+        if is_star {
+            star_entity = Some(entity);
+        } else if body_type != BodyType::Moon {
+            // First planet (first body that is neither the star nor a moon)
+            // becomes the home planet.
+            if home_entity.is_none() {
+                home_entity = Some(entity);
+                if let Some(surface) = surface.as_ref() {
+                    home_grid = Some(surface.grid.clone());
+                }
+            }
+            last_planet_entity = Some(entity);
+        }
+
+        all_bodies.push(entity);
+    }
+
+    // Fallback: if for some reason generation didn't produce a home planet
+    // (shouldn't happen with the 3–5 guarantee), fall back to a blank grid
+    // so the rest of the app boots cleanly.
+    let grid = home_grid.unwrap_or_else(|| Grid::new(DEFAULT_GRID_WIDTH, DEFAULT_GRID_HEIGHT));
     commands.insert_resource(grid);
+
+    commands.insert_resource(StarSystem {
+        name: "Sol".to_string(),
+        bodies: all_bodies,
+        star: star_entity,
+    });
+
+    if let Some(home) = home_entity {
+        commands.insert_resource(CurrentBody(home));
+    }
 }
+
+/// Backwards-compatible alias used by existing call sites.
+///
+/// Older entry points added `if_world::grid::spawn_grid` to their Startup
+/// schedule. Those now want the full star-system bootstrap. Keeping the old
+/// name around means downstream crates don't have to change the moment this
+/// lands.
+pub use spawn_star_system as spawn_grid;
 
 // --- Tests ---
 // These live in the same file, gated behind #[cfg(test)].

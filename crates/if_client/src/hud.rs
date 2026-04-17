@@ -1,5 +1,6 @@
 // hud.rs: Simple text HUD showing current selection and controls.
 
+use crate::orbital_view::ViewMode;
 use crate::placement::BuildingPlacement;
 use bevy::prelude::*;
 use if_factory::power::PowerGrid;
@@ -31,10 +32,16 @@ pub fn spawn_hud(mut commands: Commands) {
 pub fn update_hud(
     selected: Res<BuildingPlacement>,
     power_grid: Res<PowerGrid>,
+    view: Res<ViewMode>,
     mut hud_q: Query<&mut Text, With<HudText>>,
 ) {
     let Ok(mut text) = hud_q.single_mut() else {
         return;
+    };
+
+    let view_text = match *view {
+        ViewMode::Surface => "View: Surface".to_string(),
+        ViewMode::System => "View: System".to_string(),
     };
 
     let selection_text = match selected.building_type {
@@ -53,7 +60,8 @@ pub fn update_hud(
     };
 
     **text = format!(
-        "{selection_text}\n\
+        "{view_text}\n\
+         {selection_text}\n\
          {power_text}\n\n\
          [1] Mining Drill\n\
          [2] Transport Line\n\
@@ -62,6 +70,7 @@ pub fn update_hud(
          [5] Generator\n\
          [Esc] Deselect\n\
          [Tab] Toggle stats\n\
+         [M] Galaxy Map\n\
          [LMB] Place  [RMB] Remove\n\
          [WASD] Pan  [Scroll] Zoom"
     );

@@ -80,12 +80,12 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 **Goal:** Multiple planets/moons, orbital view, ships.
 
-- [ ] Celestial body data model (planets, moons, asteroids)
-- [ ] Star system model with orbital positions
-- [ ] Orbital/system camera view
-- [ ] Seamless transition: system view → surface view
-- [ ] Varying resource distributions per planet
-- [ ] Environmental modifiers (gravity, atmosphere)
+- [x] Celestial body data model (planets, moons, asteroids)
+- [x] Star system model with orbital positions
+- [x] Orbital/system camera view (M hotkey toggle)
+- [x] Seamless transition: system view → surface view
+- [x] Varying resource distributions per planet
+- [x] Environmental modifiers (gravity, atmosphere, temperature)
 - [ ] Orbital stations
 - [ ] Ship entities + inter-body travel
 - [ ] Cargo transfer (ship ↔ station ↔ surface)

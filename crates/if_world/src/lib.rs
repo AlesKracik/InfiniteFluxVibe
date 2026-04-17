@@ -3,6 +3,8 @@
 // This crate owns the "truth" of the game world. It doesn't know about
 // rendering or input — it just manages the simulation state.
 
+pub mod bodies;
+pub mod generation;
 pub mod grid;
 
 use bevy::prelude::*;
@@ -16,9 +18,11 @@ use bevy::prelude::*;
 pub struct WorldPlugin;
 
 impl Plugin for WorldPlugin {
-    fn build(&self, _app: &mut App) {
-        // World systems are registered by the client via .chain() ordering.
-        // The plugin exists as a placeholder for future world simulation
-        // systems (e.g., resource depletion ticking).
+    fn build(&self, app: &mut App) {
+        // Orbital motion runs every frame. Rendering systems that draw the
+        // system map read the updated `orbit_angle`. Factory systems only
+        // care about the currently-viewed body's `Grid`, so they are
+        // unaffected by this update.
+        app.add_systems(Update, bodies::orbital_motion_system);
     }
 }

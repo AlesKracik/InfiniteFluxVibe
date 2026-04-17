@@ -3,6 +3,8 @@
 use bevy::prelude::*;
 use if_common::{DEFAULT_GRID_HEIGHT, DEFAULT_GRID_WIDTH, TILE_SIZE};
 
+use crate::orbital_view::ViewMode;
+
 /// Marker component so we can query for our game camera specifically.
 /// Bevy might have other cameras (e.g., UI camera). This tag lets us
 /// filter: `Query<..., With<GameCamera>>`.
@@ -15,10 +17,15 @@ const PAN_SPEED: f32 = 500.0;
 /// How much each scroll tick changes the zoom.
 const ZOOM_SPEED: f32 = 0.1;
 
-/// Min/max zoom levels (OrthographicProjection scale).
+/// Min/max zoom levels (OrthographicProjection scale) for Surface view.
 /// Scale < 1.0 = zoomed in, scale > 1.0 = zoomed out.
 const MIN_ZOOM: f32 = 0.25;
 const MAX_ZOOM: f32 = 4.0;
+
+/// Min/max zoom levels for System (orbital) view — much wider range so the
+/// player can fit a whole solar system on screen.
+const SYSTEM_MIN_ZOOM: f32 = 0.05;
+const SYSTEM_MAX_ZOOM: f32 = 5.0;
 
 /// Startup system: spawns a 2D camera centered on the grid.
 pub fn spawn_camera(mut commands: Commands) {
@@ -50,6 +57,7 @@ pub fn camera_movement(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut scroll_events: MessageReader<bevy::input::mouse::MouseWheel>,
+    view: Res<ViewMode>,
 ) {
     let Ok((mut transform, mut projection)) = camera_q.single_mut() else {
         return;
@@ -83,8 +91,13 @@ pub fn camera_movement(
         return; // Not orthographic — shouldn't happen with Camera2d, but safe.
     };
 
+    // Zoom range depends on view mode: surface is tighter, system is wider.
+    let (min_zoom, max_zoom) = match *view {
+        ViewMode::Surface => (MIN_ZOOM, MAX_ZOOM),
+        ViewMode::System => (SYSTEM_MIN_ZOOM, SYSTEM_MAX_ZOOM),
+    };
     for event in scroll_events.read() {
         ortho.scale -= event.y * ZOOM_SPEED;
-        ortho.scale = ortho.scale.clamp(MIN_ZOOM, MAX_ZOOM);
+        ortho.scale = ortho.scale.clamp(min_zoom, max_zoom);
     }
 }

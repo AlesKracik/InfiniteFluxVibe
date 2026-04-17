@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn bonus_increases_with_level() {
-        let low = SkillLevel::new(1 * XP_PER_LEVEL);
+        let low = SkillLevel::new(XP_PER_LEVEL);
         let mid = SkillLevel::new(25 * XP_PER_LEVEL);
         let high = SkillLevel::new(100 * XP_PER_LEVEL);
 
@@ -166,7 +166,7 @@ mod tests {
     #[test]
     fn diminishing_returns() {
         // Going from level 0→1 should give a bigger boost than 99→100
-        let gain_0_to_1 = SkillLevel::new(1 * XP_PER_LEVEL).bonus() - SkillLevel::new(0).bonus();
+        let gain_0_to_1 = SkillLevel::new(XP_PER_LEVEL).bonus() - SkillLevel::new(0).bonus();
         let gain_99_to_100 = SkillLevel::new(100 * XP_PER_LEVEL).bonus()
             - SkillLevel::new(99 * XP_PER_LEVEL).bonus();
 

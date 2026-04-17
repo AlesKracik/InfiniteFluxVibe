@@ -14,6 +14,8 @@ use if_factory::power::PowerGrid;
 use if_factory::stats::ThroughputTracker;
 
 use crate::audio::AudioSettings;
+use crate::camera::GameCamera;
+use crate::orbital_view::{SavedCameras, ViewMode, toggle_view_mode};
 use crate::placement::{BuildingPlacement, ShowStats};
 
 /// All item types in the game, for iteration in UI panels.
@@ -76,10 +78,14 @@ pub struct EguiWantsPointer(pub bool);
 
 /// System: render the building palette panel on the left side.
 /// Clicking a building selects it for placement.
+#[allow(clippy::too_many_arguments)]
 pub fn building_palette_panel(
     mut contexts: EguiContexts,
     mut selected: ResMut<BuildingPlacement>,
     mut egui_wants: ResMut<EguiWantsPointer>,
+    mut view: ResMut<ViewMode>,
+    mut saved_cams: ResMut<SavedCameras>,
+    mut camera_q: Query<(&mut Transform, &mut Projection), With<GameCamera>>,
     mut warmup: Local<u8>,
 ) {
     // Skip early frames — egui's begin_pass may not have run yet
@@ -140,6 +146,18 @@ pub fn building_palette_panel(
             ui.separator();
             if ui.add(egui::Button::new("Deselect [Esc]")).clicked() {
                 selected.building_type = None;
+            }
+
+            ui.add_space(8.0);
+            ui.separator();
+            let map_label = match *view {
+                ViewMode::Surface => "Galaxy Map [M]",
+                ViewMode::System => "Back to Surface [M]",
+            };
+            if ui.add(egui::Button::new(map_label)).clicked()
+                && let Ok((mut xf, mut proj)) = camera_q.single_mut()
+            {
+                toggle_view_mode(&mut view, &mut saved_cams, &mut xf, &mut proj);
             }
         });
 
