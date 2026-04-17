@@ -3177,6 +3177,7 @@ name = "if_factory"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bincode",
  "if_common",
  "serde",
 ]

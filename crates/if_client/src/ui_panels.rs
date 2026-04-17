@@ -13,6 +13,7 @@ use if_factory::inventory::Inventory;
 use if_factory::power::PowerGrid;
 use if_factory::stats::ThroughputTracker;
 
+use crate::audio::AudioSettings;
 use crate::placement::{BuildingPlacement, ShowStats};
 
 /// All item types in the game, for iteration in UI panels.
@@ -293,6 +294,7 @@ pub fn statistics_dashboard(
     building_q: Query<&Building>,
     inventory_q: Query<&Inventory>,
     throughput_q: Query<(&ThroughputTracker, &Building)>,
+    mut audio_settings: ResMut<AudioSettings>,
     mut egui_wants: ResMut<EguiWantsPointer>,
     mut warmup: Local<u8>,
 ) {
@@ -413,6 +415,24 @@ pub fn statistics_dashboard(
                         ui.end_row();
                     }
                 });
+
+            ui.add_space(10.0);
+
+            // --- Audio Settings ---
+            ui.collapsing("Audio", |ui| {
+                ui.checkbox(&mut audio_settings.sfx_enabled, "Sound effects");
+                ui.horizontal(|ui| {
+                    ui.label("Master volume");
+                    // Display the slider as a percentage for friendliness.
+                    let mut pct = (audio_settings.master_volume * 100.0).round();
+                    if ui
+                        .add(egui::Slider::new(&mut pct, 0.0..=100.0).suffix("%"))
+                        .changed()
+                    {
+                        audio_settings.master_volume = (pct / 100.0).clamp(0.0, 1.0);
+                    }
+                });
+            });
         });
 
     egui_wants.0 = egui_wants.0 || ctx.wants_pointer_input();

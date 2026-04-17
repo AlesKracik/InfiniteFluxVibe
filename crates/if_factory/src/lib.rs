@@ -4,6 +4,7 @@
 // mining drills extract ores, transport lines move items, machines process
 // items according to recipes.
 
+pub mod blueprint;
 pub mod building;
 pub mod inventory;
 pub mod mining;

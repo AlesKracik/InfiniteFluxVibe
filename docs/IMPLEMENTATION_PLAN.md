@@ -59,7 +59,7 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 ---
 
-## Phase 2: UI & Polish
+## Phase 2: UI & Polish ✅ DONE
 
 **Goal:** Full UI layer — the game becomes actually usable and demoable.
 
@@ -69,10 +69,10 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 - [x] Statistics dashboard (building counts, stock, throughput)
 - [x] Tooltip system (building hover details)
 - [x] Notification/alert system (placement, depletion, power alerts)
-- [ ] Sound effects
+- [x] Sound effects (framework, graceful fallback when assets missing)
 - [x] Save/load (Serde + Bincode, F5/F9)
-- [ ] Blueprint system (copy/paste factory layouts)
-- [ ] Tutorial sequence
+- [x] Blueprint system (copy/paste factory layouts, B hotkey)
+- [x] Tutorial sequence (6-step guided onboarding)
 
 ---
 

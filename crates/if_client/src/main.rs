@@ -3,6 +3,8 @@
 // This is the binary crate (has main.rs, not lib.rs). Running
 // `cargo run -p if_client` launches this.
 
+mod audio;
+mod blueprint_systems;
 mod building_labels;
 mod camera;
 mod grid_renderer;
@@ -11,6 +13,7 @@ mod notifications;
 mod placement;
 mod save_load;
 mod tooltips;
+mod tutorial;
 mod ui_panels;
 mod world_setup;
 
@@ -44,6 +47,10 @@ fn main() {
         .init_resource::<placement::ShowStats>()
         .init_resource::<EguiWantsPointer>()
         .init_resource::<notifications::Notifications>()
+        .init_resource::<blueprint_systems::BlueprintMode>()
+        .init_resource::<audio::AudioSettings>()
+        .init_resource::<audio::SoundEffects>()
+        .init_resource::<tutorial::TutorialState>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -55,11 +62,14 @@ fn main() {
                     grid_renderer::spawn_grid_visuals,
                     placement::spawn_ghost,
                     hud::spawn_hud,
+                    blueprint_systems::load_blueprints,
+                    audio::load_sound_effects,
                 ),
             )
                 .chain(),
         )
-        // Update systems
+        // Update systems — split into multiple add_systems calls to stay
+        // under Bevy's per-tuple size limit.
         .add_systems(
             Update,
             (
@@ -72,6 +82,11 @@ fn main() {
                 building_labels::spawn_building_labels,
                 building_labels::update_building_labels,
                 building_labels::cleanup_orphaned_labels,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
                 // egui panels
                 ui_panels::building_palette_panel,
                 ui_panels::resource_overview_panel,
@@ -86,6 +101,32 @@ fn main() {
                 save_load::save_system,
                 save_load::load_system,
             ),
+        )
+        .add_systems(
+            Update,
+            (
+                // blueprints
+                blueprint_systems::blueprint_hotkey_system,
+                blueprint_systems::blueprint_copy_hotkey_system,
+                blueprint_systems::blueprint_copy_system,
+                blueprint_systems::blueprint_paste_system,
+                blueprint_systems::blueprint_ghost_system,
+                blueprint_systems::blueprint_panel_system,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                // audio
+                audio::sound_on_building_placed,
+                audio::sound_on_resource_depleted,
+                audio::sound_on_save_load,
+                audio::sound_on_recipe_complete,
+            ),
+        )
+        .add_systems(
+            Update,
+            (tutorial::tutorial_advance_system, tutorial::tutorial_panel),
         )
         .run();
 }
