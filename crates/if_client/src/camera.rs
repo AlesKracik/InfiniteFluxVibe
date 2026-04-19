@@ -27,6 +27,11 @@ const MAX_ZOOM: f32 = 4.0;
 const SYSTEM_MIN_ZOOM: f32 = 0.05;
 const SYSTEM_MAX_ZOOM: f32 = 5.0;
 
+/// Min/max zoom levels for Galaxy view — slightly tighter than System since
+/// galaxy coordinates are naturally compact.
+const GALAXY_MIN_ZOOM: f32 = 0.1;
+const GALAXY_MAX_ZOOM: f32 = 2.0;
+
 /// Startup system: spawns a 2D camera centered on the grid.
 pub fn spawn_camera(mut commands: Commands) {
     // Calculate the center of the grid in world coordinates.
@@ -91,10 +96,11 @@ pub fn camera_movement(
         return; // Not orthographic — shouldn't happen with Camera2d, but safe.
     };
 
-    // Zoom range depends on view mode: surface is tighter, system is wider.
+    // Zoom range depends on view mode: surface is tighter, system/galaxy wider.
     let (min_zoom, max_zoom) = match *view {
         ViewMode::Surface => (MIN_ZOOM, MAX_ZOOM),
         ViewMode::System => (SYSTEM_MIN_ZOOM, SYSTEM_MAX_ZOOM),
+        ViewMode::Galaxy => (GALAXY_MIN_ZOOM, GALAXY_MAX_ZOOM),
     };
     for event in scroll_events.read() {
         ortho.scale -= event.y * ZOOM_SPEED;

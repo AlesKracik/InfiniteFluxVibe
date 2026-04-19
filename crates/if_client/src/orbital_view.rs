@@ -36,16 +36,17 @@ pub enum ViewMode {
     #[default]
     Surface,
     System,
+    Galaxy,
 }
 
 impl ViewMode {
-    /// Toggle between Surface and System. Written so that adding a third mode
-    /// (e.g. galaxy) later only requires extending this match.
+    /// Cycle through the view modes: Surface -> System -> Galaxy -> Surface.
     #[allow(dead_code)] // used by tests + future plumbing
     pub fn toggle(self) -> Self {
         match self {
             ViewMode::Surface => ViewMode::System,
-            ViewMode::System => ViewMode::Surface,
+            ViewMode::System => ViewMode::Galaxy,
+            ViewMode::Galaxy => ViewMode::Surface,
         }
     }
 }
@@ -55,9 +56,12 @@ impl ViewMode {
 pub struct SavedCameras {
     pub surface: CameraState,
     pub system: CameraState,
+    pub galaxy: CameraState,
     /// Has the system view ever been shown? If not, we'll initialize the
     /// system camera on first entry rather than using uninitialized state.
     pub system_initialized: bool,
+    /// Has the galaxy view ever been shown? Same rationale as above.
+    pub galaxy_initialized: bool,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -86,7 +90,14 @@ impl Default for SavedCameras {
                 // placeholder system (outer orbit at r=500) with margin.
                 scale: 1.5,
             },
+            galaxy: CameraState {
+                translation: Vec3::ZERO,
+                // Galaxy-scale layout uses coordinates in the low-hundreds;
+                // scale 1.0 keeps the whole map comfortably visible.
+                scale: 1.0,
+            },
             system_initialized: false,
+            galaxy_initialized: false,
         }
     }
 }
@@ -307,8 +318,8 @@ pub fn update_orbital_positions(mut bodies_q: Query<(&OrbitalBodyVisual, &mut Tr
     }
 }
 
-/// Swap between Surface and System view, saving the outgoing camera state
-/// and restoring the incoming view's saved state.
+/// Cycle through Surface -> System -> Galaxy -> Surface, saving the outgoing
+/// camera state and restoring the incoming view's saved state.
 ///
 /// Shared by the `M` hotkey and the "Galaxy Map" egui button so the two
 /// paths behave identically.
@@ -343,6 +354,19 @@ pub fn toggle_view_mode(
         ViewMode::System => {
             saved.system = current_state;
             saved.system_initialized = true;
+            if !saved.galaxy_initialized {
+                saved.galaxy.translation = Vec3::ZERO;
+                saved.galaxy_initialized = true;
+            }
+            *view = ViewMode::Galaxy;
+            transform.translation = saved.galaxy.translation;
+            if let Projection::Orthographic(ref mut ortho) = *projection {
+                ortho.scale = saved.galaxy.scale;
+            }
+        }
+        ViewMode::Galaxy => {
+            saved.galaxy = current_state;
+            saved.galaxy_initialized = true;
             *view = ViewMode::Surface;
             transform.translation = saved.surface.translation;
             if let Projection::Orthographic(ref mut ortho) = *projection {
@@ -373,7 +397,9 @@ pub fn view_mode_toggle_system(
 
 /// System: apply the current ViewMode to entity Visibility.
 ///
-/// Runs only on change to avoid re-touching every sprite every frame.
+/// Runs only on change to avoid re-touching every sprite every frame. Galaxy
+/// mode hides both Surface and System entities; the Galaxy-specific visibility
+/// for `GalaxyVisual` entities lives in `galaxy_view::apply_galaxy_visibility`.
 pub fn apply_view_visibility(
     view: Res<ViewMode>,
     mut surface_q: Query<&mut Visibility, (With<SurfaceVisual>, Without<SystemVisual>)>,
@@ -386,6 +412,7 @@ pub fn apply_view_visibility(
     let (surface_vis, system_vis) = match *view {
         ViewMode::Surface => (Visibility::Visible, Visibility::Hidden),
         ViewMode::System => (Visibility::Hidden, Visibility::Visible),
+        ViewMode::Galaxy => (Visibility::Hidden, Visibility::Hidden),
     };
 
     for mut v in &mut surface_q {
@@ -411,18 +438,18 @@ pub fn auto_tag_surface_visuals(
     sprites_q: Query<Entity, (With<Sprite>, Without<SurfaceVisual>, Without<SystemVisual>)>,
     texts_q: Query<Entity, (With<Text2d>, Without<SurfaceVisual>, Without<SystemVisual>)>,
 ) {
-    let in_system = *view == ViewMode::System;
+    let hide_now = *view != ViewMode::Surface;
     for entity in &sprites_q {
         let mut e = commands.entity(entity);
         e.insert(SurfaceVisual);
-        if in_system {
+        if hide_now {
             e.insert(Visibility::Hidden);
         }
     }
     for entity in &texts_q {
         let mut e = commands.entity(entity);
         e.insert(SurfaceVisual);
-        if in_system {
+        if hide_now {
             e.insert(Visibility::Hidden);
         }
     }
@@ -630,6 +657,8 @@ mod tests {
         assert_eq!(m, ViewMode::Surface);
         m = m.toggle();
         assert_eq!(m, ViewMode::System);
+        m = m.toggle();
+        assert_eq!(m, ViewMode::Galaxy);
         m = m.toggle();
         assert_eq!(m, ViewMode::Surface);
     }

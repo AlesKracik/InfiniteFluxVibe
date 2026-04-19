@@ -4,8 +4,10 @@
 // rendering or input — it just manages the simulation state.
 
 pub mod bodies;
+pub mod galaxy;
 pub mod generation;
 pub mod grid;
+pub mod logistics;
 pub mod ships;
 
 use bevy::prelude::*;
@@ -29,6 +31,9 @@ impl Plugin for WorldPlugin {
             // we bundle the `ShipsPlugin` with the core world plugin. Clients
             // that don't want ship simulation can add `WorldPlugin` only and
             // skip this by composing their own plugin instead.
-            .add_plugins(ships::ShipsPlugin);
+            .add_plugins(ships::ShipsPlugin)
+            // Phase 4 adds galaxy/warp/freight routes; bundled here so any
+            // client using `WorldPlugin` automatically gets the full stack.
+            .add_plugins(logistics::LogisticsPlugin);
     }
 }

@@ -151,8 +151,9 @@ pub fn building_palette_panel(
             ui.add_space(8.0);
             ui.separator();
             let map_label = match *view {
-                ViewMode::Surface => "Galaxy Map [M]",
-                ViewMode::System => "Back to Surface [M]",
+                ViewMode::Surface => "System Map [M]",
+                ViewMode::System => "Galaxy Map [M]",
+                ViewMode::Galaxy => "Back to Surface [M]",
             };
             if ui.add(egui::Button::new(map_label)).clicked()
                 && let Ok((mut xf, mut proj)) = camera_q.single_mut()

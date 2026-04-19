@@ -58,10 +58,16 @@ pub struct Ship {
     pub fuel: f32,
     /// Max fuel capacity.
     pub fuel_capacity: f32,
+    /// Which star system the ship is currently in. Indexes into
+    /// `Galaxy::systems`. Defaults to 0 (home system) for backwards compat —
+    /// old saves that don't include this field will deserialize as home.
+    #[serde(default)]
+    pub system_index: usize,
 }
 
 impl Ship {
-    /// Convenience constructor with a full fuel tank.
+    /// Convenience constructor with a full fuel tank. Defaults to the home
+    /// system (index 0).
     pub fn new_full(
         name: impl Into<String>,
         cargo_capacity: u32,
@@ -74,14 +80,33 @@ impl Ship {
             speed,
             fuel: fuel_capacity,
             fuel_capacity,
+            system_index: 0,
         }
+    }
+
+    /// Refuel up to `fuel_capacity`. Returns the amount of fuel actually added
+    /// (limited by remaining headroom in the tank). Negative `amount` is
+    /// treated as zero.
+    pub fn refuel(&mut self, amount: f32) -> f32 {
+        if amount <= 0.0 {
+            return 0.0;
+        }
+        let headroom = (self.fuel_capacity - self.fuel).max(0.0);
+        let added = amount.min(headroom);
+        self.fuel += added;
+        added
     }
 }
 
 /// Ship state machine.
 ///
 /// * `Docked` — parked at a station or surface, inactive.
-/// * `Traveling` — moving between two locations; progress is 0.0..=1.0.
+/// * `Traveling` — moving between two locations within a single star system;
+///   progress is 0.0..=1.0.
+/// * `Warping` — jumping between star systems (see `warp_travel_system`).
+///   Progress accumulates from 0.0 to 1.0 over a few ticks; on completion the
+///   ship's `system_index` is set to `to_system` and it becomes `Idle` near
+///   the destination system's home body.
 /// * `Idle` — in space near a body, not moving (e.g., out of fuel or between
 ///   jobs).
 #[derive(Component, Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -92,6 +117,14 @@ pub enum ShipState {
     Traveling {
         from: ShipLocation,
         to: ShipLocation,
+        /// Progress 0.0..=1.0.
+        progress: f32,
+    },
+    Warping {
+        /// System index the ship departed from.
+        from_system: usize,
+        /// System index the ship is jumping to.
+        to_system: usize,
         /// Progress 0.0..=1.0.
         progress: f32,
     },
@@ -106,17 +139,25 @@ impl ShipState {
         matches!(self, ShipState::Traveling { .. })
     }
 
-    /// True if the ship can accept a new travel order (Docked or Idle).
+    /// True if the ship is currently mid-warp between systems.
+    pub fn is_warping(&self) -> bool {
+        matches!(self, ShipState::Warping { .. })
+    }
+
+    /// True if the ship can accept a new travel or warp order (Docked or
+    /// Idle). Warping and Traveling ships cannot be re-ordered.
     pub fn can_depart(&self) -> bool {
         matches!(self, ShipState::Docked { .. } | ShipState::Idle { .. })
     }
 
-    /// Current or nearest known location.
-    pub fn current_location(&self) -> &ShipLocation {
+    /// Current or nearest known location. Returns `None` during a warp
+    /// (inter-system travel has no in-system location).
+    pub fn current_location(&self) -> Option<&ShipLocation> {
         match self {
-            ShipState::Docked { location } => location,
-            ShipState::Traveling { from, .. } => from,
-            ShipState::Idle { near } => near,
+            ShipState::Docked { location } => Some(location),
+            ShipState::Traveling { from, .. } => Some(from),
+            ShipState::Idle { near } => Some(near),
+            ShipState::Warping { .. } => None,
         }
     }
 }
@@ -317,6 +358,10 @@ pub fn process_travel_orders(
                     "ship '{}' is already traveling; ignoring travel order",
                     ship.name
                 );
+                continue;
+            }
+            ShipState::Warping { .. } => {
+                warn!("ship '{}' is mid-warp; ignoring travel order", ship.name);
                 continue;
             }
         };
@@ -921,6 +966,7 @@ mod tests {
                     speed: 5.0,
                     fuel: 0.01, // less than 0.05 required per tick
                     fuel_capacity: 100.0,
+                    system_index: 0,
                 },
                 ShipState::Traveling {
                     from: ShipLocation::Surface("A".into()),

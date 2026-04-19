@@ -7,8 +7,10 @@ mod audio;
 mod blueprint_systems;
 mod building_labels;
 mod camera;
+mod galaxy_view;
 mod grid_renderer;
 mod hud;
+mod logistics;
 mod notifications;
 mod orbital_view;
 mod placement;
@@ -57,6 +59,9 @@ fn main() {
         .init_resource::<orbital_view::SavedCameras>()
         .init_resource::<orbital_view::CurrentBody>()
         .init_resource::<ship_view::FleetUiState>()
+        .init_resource::<galaxy_view::GalaxyUiState>()
+        .init_resource::<galaxy_view::PendingWarp>()
+        .init_resource::<logistics::LogisticsUiState>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -71,6 +76,7 @@ fn main() {
                     blueprint_systems::load_blueprints,
                     audio::load_sound_effects,
                     orbital_view::spawn_system_visuals,
+                    galaxy_view::spawn_galaxy_visuals,
                 ),
                 // Ship/station spawn must read planet positions, so it runs
                 // after the system visuals exist.
@@ -164,6 +170,19 @@ fn main() {
                 ship_view::cargo_window,
             )
                 .chain(),
+        )
+        .add_systems(
+            Update,
+            (
+                // galaxy view + logistics
+                galaxy_view::apply_galaxy_visibility,
+                galaxy_view::sync_active_ring,
+                galaxy_view::galaxy_click_to_select,
+                galaxy_view::galaxy_info_panel,
+                galaxy_view::apply_pending_warp,
+                logistics::logistics_hotkey_system,
+                logistics::logistics_panel,
+            ),
         )
         .run();
 }

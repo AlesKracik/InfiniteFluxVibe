@@ -42,6 +42,7 @@ pub fn update_hud(
     let view_text = match *view {
         ViewMode::Surface => "View: Surface".to_string(),
         ViewMode::System => "View: System".to_string(),
+        ViewMode::Galaxy => "View: Galaxy".to_string(),
     };
 
     let selection_text = match selected.building_type {
@@ -70,7 +71,8 @@ pub fn update_hud(
          [5] Generator\n\
          [Esc] Deselect\n\
          [Tab] Toggle stats\n\
-         [M] Galaxy Map\n\
+         [M] Cycle View (Surface/System/Galaxy)\n\
+         [L] Logistics\n\
          [LMB] Place  [RMB] Remove\n\
          [WASD] Pan  [Scroll] Zoom"
     );

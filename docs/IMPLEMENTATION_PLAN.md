@@ -92,16 +92,16 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 ---
 
-## Phase 4: Interplanetary Logistics
+## Phase 4: Interplanetary Logistics ✅ DONE
 
 **Goal:** Automated freight routes, galaxy map.
 
-- [ ] Galaxy map (2D star map, warp lanes)
-- [ ] Warp travel between systems
-- [ ] Logistics Manager UI
-- [ ] Freight route data model + autonomous AI
-- [ ] Fuel system
-- [ ] Resource depletion (forces expansion)
+- [x] Galaxy map (2D star map, warp lanes)
+- [x] Warp travel between systems (with fuel cost)
+- [x] Logistics Manager UI (L hotkey, route editor)
+- [x] Freight route data model + autonomous AI (waypoints, Load/Unload/Visit actions)
+- [x] Fuel system (refuel helpers, warp consumption)
+- [x] Resource depletion tracking (DepletionStats + events)
 
 ---
 
