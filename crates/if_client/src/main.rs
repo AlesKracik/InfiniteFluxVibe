@@ -11,6 +11,7 @@ mod galaxy_view;
 mod grid_renderer;
 mod hud;
 mod logistics;
+mod market_view;
 mod net;
 mod notifications;
 mod orbital_view;
@@ -66,6 +67,10 @@ fn main() {
         .init_resource::<galaxy_view::GalaxyUiState>()
         .init_resource::<galaxy_view::PendingWarp>()
         .init_resource::<logistics::LogisticsUiState>()
+        .init_resource::<market_view::MarketsUi>()
+        .init_resource::<market_view::MarketUiState>()
+        .init_resource::<market_view::ContractBoardUi>()
+        .init_resource::<market_view::ContractUiState>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -81,6 +86,8 @@ fn main() {
                     audio::load_sound_effects,
                     orbital_view::spawn_system_visuals,
                     galaxy_view::spawn_galaxy_visuals,
+                    market_view::init_markets_ui,
+                    market_view::init_contracts_ui,
                 ),
                 // Ship/station spawn must read planet positions, so it runs
                 // after the system visuals exist.
@@ -186,6 +193,16 @@ fn main() {
                 galaxy_view::apply_pending_warp,
                 logistics::logistics_hotkey_system,
                 logistics::logistics_panel,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                // market + contracts
+                market_view::market_hotkey_system,
+                market_view::contracts_hotkey_system,
+                market_view::market_panel,
+                market_view::contracts_panel,
             ),
         )
         .run();

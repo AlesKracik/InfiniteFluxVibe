@@ -10,6 +10,7 @@ members = [
     "crates/if_client",
     "crates/if_protocol",
     "crates/if_server",
+    "crates/if_economy",
 ]
 
 [workspace.package]

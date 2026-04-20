@@ -3174,6 +3174,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "if_economy"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bincode",
+ "if_common",
+ "if_factory",
+ "serde",
+]
+
+[[package]]
 name = "if_factory"
 version = "0.1.0"
 dependencies = [

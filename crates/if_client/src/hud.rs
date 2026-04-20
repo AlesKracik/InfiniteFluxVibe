@@ -1,5 +1,6 @@
 // hud.rs: Simple text HUD showing current selection and controls.
 
+use crate::market_view::MarketsUi;
 use crate::orbital_view::ViewMode;
 use crate::placement::BuildingPlacement;
 use bevy::prelude::*;
@@ -33,6 +34,7 @@ pub fn update_hud(
     selected: Res<BuildingPlacement>,
     power_grid: Res<PowerGrid>,
     view: Res<ViewMode>,
+    markets: Res<MarketsUi>,
     mut hud_q: Query<&mut Text, With<HudText>>,
 ) {
     let Ok(mut text) = hud_q.single_mut() else {
@@ -60,10 +62,13 @@ pub fn update_hud(
         )
     };
 
+    let wallet_text = format!("Wallet: {}", markets.player_wallet.display());
+
     **text = format!(
         "{view_text}\n\
          {selection_text}\n\
-         {power_text}\n\n\
+         {power_text}\n\
+         {wallet_text}\n\n\
          [1] Mining Drill\n\
          [2] Transport Line\n\
          [3] Smelter\n\
@@ -73,6 +78,7 @@ pub fn update_hud(
          [Tab] Toggle stats\n\
          [M] Cycle View (Surface/System/Galaxy)\n\
          [L] Logistics\n\
+         [K] Market  [J] Jobs\n\
          [LMB] Place  [RMB] Remove\n\
          [WASD] Pan  [Scroll] Zoom"
     );

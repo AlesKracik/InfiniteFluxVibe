@@ -122,18 +122,18 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 ---
 
-## Phase 6: Economy & Market
+## Phase 6: Economy & Market ✅ DONE
 
 **Goal:** Player-driven economy.
 
-- [ ] Order book matching engine
-- [ ] Market UI (order book, price history)
-- [ ] Fixed-point currency (Credits newtype)
-- [ ] Buy/sell orders, matching, settlement
-- [ ] Courier contracts
-- [ ] Price history + charting
-- [ ] Manufacturing contracts
-- [ ] Corporation wallets
+- [x] Order book matching engine (price-time priority, FIFO within level)
+- [x] Market UI (K hotkey — order book, buy/sell, mini chart)
+- [x] Fixed-point currency (Credits newtype, i64 cents, saturating math)
+- [x] Buy/sell orders, matching, settlement (resting-order pricing)
+- [x] Courier contracts (J hotkey — job board)
+- [x] Price history + charting (ring buffer + egui painter mini-chart)
+- [x] Manufacturing + Mercenary contracts
+- [x] Corporation wallets (with dividend distribution)
 
 ---
 
