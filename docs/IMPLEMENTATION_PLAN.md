@@ -109,16 +109,16 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 **Goal:** Client-server split. Hardest technical phase.
 
-- [ ] if_protocol crate (message definitions)
-- [ ] if_server crate (headless Bevy app)
-- [ ] Quinn/Renet networking
+- [x] if_protocol crate (message definitions)
+- [x] if_server crate (headless Bevy app, TCP listener)
+- [ ] Quinn/Renet networking (TCP stub in place; upgrade path documented)
 - [ ] Client-side prediction
-- [ ] Server-authoritative simulation
+- [ ] Server-authoritative simulation (basic echo/chat only for now)
 - [ ] Authentication
 - [ ] PostgreSQL persistence (SQLx)
 - [ ] Area-of-interest filtering
 - [ ] Stress testing
-- [ ] Chat system
+- [x] Chat system (client egui panel + server broadcast)
 
 ---
 

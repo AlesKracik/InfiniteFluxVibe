@@ -13,3 +13,4 @@ bincode = { workspace = true }
 if_common = { path = "../if_common" }
 if_world = { path = "../if_world" }
 if_factory = { path = "../if_factory" }
+if_protocol = { path = "../if_protocol" }

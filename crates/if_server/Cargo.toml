@@ -1,0 +1,25 @@
+[package]
+name = "if_server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Headless authoritative server for Infinite Flux"
+
+[[bin]]
+name = "if_server"
+path = "src/main.rs"
+
+[dependencies]
+# We intentionally don't inherit `bevy` from the workspace so we can disable
+# default features (no windowing / rendering on the server).
+bevy = { version = "0.18", default-features = false, features = ["bevy_log", "bevy_state"] }
+serde = { workspace = true }
+bincode = { workspace = true }
+tokio = { workspace = true }
+if_common = { path = "../if_common" }
+if_world = { path = "../if_world" }
+if_factory = { path = "../if_factory" }
+if_protocol = { path = "../if_protocol" }
+
+[dev-dependencies]
+tokio = { workspace = true }

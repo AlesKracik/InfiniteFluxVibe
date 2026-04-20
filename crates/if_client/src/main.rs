@@ -11,6 +11,7 @@ mod galaxy_view;
 mod grid_renderer;
 mod hud;
 mod logistics;
+mod net;
 mod notifications;
 mod orbital_view;
 mod placement;
@@ -44,6 +45,9 @@ fn main() {
         .add_plugins(WorldPlugin)
         .add_plugins(FactoryPlugin)
         .add_plugins(EguiPlugin::default())
+        // Networking is opt-in: the plugin installs resources and systems
+        // but nothing actually connects until the player presses F9.
+        .add_plugins(net::ClientNetPlugin)
         // Resources
         .init_resource::<BuildingPlacement>()
         .init_resource::<BuildingMap>()
