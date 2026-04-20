@@ -339,7 +339,14 @@ pub fn chat_panel_ui(
     mut chat_ui: ResMut<ChatUi>,
     chat: Res<ChatMessages>,
     mut conn: ResMut<NetConnection>,
+    mut warmup: Local<u8>,
 ) {
+    // Skip early frames — egui's begin_pass may not have run yet
+    // when the window is first created.
+    if *warmup < 3 {
+        *warmup += 1;
+        return;
+    }
     let Ok(ctx) = contexts.ctx_mut() else {
         return;
     };
