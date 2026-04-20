@@ -15,3 +15,10 @@ Desktop.ini
 
 # Environment
 .env
+
+# Claude Code local state
+.claude/
+
+# Game saves (user state, not source)
+/saves/
+crates/if_client/saves/
