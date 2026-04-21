@@ -79,6 +79,7 @@ pub fn update_hud(
          [M] Cycle View (Surface/System/Galaxy)\n\
          [L] Logistics\n\
          [K] Market  [J] Jobs\n\
+         [F] Fleet  [G] Fit\n\
          [LMB] Place  [RMB] Remove\n\
          [WASD] Pan  [Scroll] Zoom"
     );

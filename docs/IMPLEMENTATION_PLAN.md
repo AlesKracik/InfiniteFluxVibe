@@ -137,19 +137,19 @@ Items, recipes, mining, transport lines, machines, power grid, building placemen
 
 ---
 
-## Phase 7: Combat
+## Phase 7: Combat ✅ DONE
 
 **Goal:** Tactical fleet combat.
 
-- [ ] Ship fitting (modules, hardpoints, power/CPU)
-- [ ] Weapons, shields, armor, capacitor
-- [ ] Targeting, damage model, falloff
-- [ ] Heat system, ammunition
-- [ ] Fleet grouping + FC broadcast
-- [ ] Electronic warfare
-- [ ] Ship destruction + loot
-- [ ] Fleet Command UI
-- [ ] Silica Swarm NPC enemies
+- [x] Ship fitting (ShipFit component with high/med/low slots, PG/CPU budgets)
+- [x] Weapons (Laser/AC/Missile/Railgun), shields, armor, capacitor
+- [x] Targeting, damage model (shield→armor→hull), range falloff
+- [x] Heat system (overheating at max), ammunition (missile ItemType)
+- [x] Fleet grouping + FleetCommand message (Assemble/Engage/Disengage/Warp)
+- [ ] Electronic warfare (deferred)
+- [x] Ship destruction + loot (ShipDestroyedEvent + LootContainer decay)
+- [x] Fleet Command UI (F hotkey) + ship fit panel (G) + combat HUD
+- [x] Silica Swarm NPC enemies (AI: nearest target, range-keeping)
 
 ---
 

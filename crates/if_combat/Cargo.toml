@@ -1,0 +1,16 @@
+[package]
+name = "if_combat"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Fleet combat: fitting, damage, targeting, AI"
+
+[dependencies]
+bevy = { workspace = true }
+serde = { workspace = true }
+if_common = { path = "../if_common" }
+if_factory = { path = "../if_factory" }
+if_world = { path = "../if_world" }
+
+[dev-dependencies]
+bincode = { workspace = true }

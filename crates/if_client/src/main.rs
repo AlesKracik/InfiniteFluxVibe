@@ -7,6 +7,7 @@ mod audio;
 mod blueprint_systems;
 mod building_labels;
 mod camera;
+mod combat_view;
 mod galaxy_view;
 mod grid_renderer;
 mod hud;
@@ -71,6 +72,9 @@ fn main() {
         .init_resource::<market_view::MarketUiState>()
         .init_resource::<market_view::ContractBoardUi>()
         .init_resource::<market_view::ContractUiState>()
+        .init_resource::<combat_view::FleetUi>()
+        .init_resource::<combat_view::CombatUiState>()
+        .init_resource::<combat_view::DamageFloaters>()
         // Startup systems: spawn_grid first, then everything else
         .add_systems(
             Startup,
@@ -92,6 +96,9 @@ fn main() {
                 // Ship/station spawn must read planet positions, so it runs
                 // after the system visuals exist.
                 ship_view::spawn_ship_and_station_visuals,
+                // Combat UI seed data — depends on orbital system existing
+                // (positions anchored relative to home planet).
+                combat_view::init_combat_ui,
             )
                 .chain(),
         )
@@ -203,6 +210,19 @@ fn main() {
                 market_view::contracts_hotkey_system,
                 market_view::market_panel,
                 market_view::contracts_panel,
+            ),
+        )
+        .add_systems(
+            Update,
+            (
+                // combat UI (Phase 7)
+                combat_view::combat_hotkey_system,
+                combat_view::fc_panel,
+                combat_view::combat_hud,
+                combat_view::ship_fit_panel,
+                combat_view::simulate_damage_events,
+                combat_view::damage_floater_display_system,
+                combat_view::draw_npc_badges,
             ),
         )
         .run();

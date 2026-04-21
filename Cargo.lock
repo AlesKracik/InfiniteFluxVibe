@@ -3165,6 +3165,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "if_combat"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bincode",
+ "if_common",
+ "if_factory",
+ "if_world",
+ "serde",
+]
+
+[[package]]
 name = "if_common"
 version = "0.1.0"
 dependencies = [

@@ -1122,10 +1122,11 @@ mod tests {
     use super::*;
 
     fn fresh_markets() -> MarketsUi {
-        let mut m = MarketsUi::default();
-        m.player_wallet = CreditsUi::from_whole(10_000);
-        m.player_id = 1;
-        m
+        MarketsUi {
+            player_wallet: CreditsUi::from_whole(10_000),
+            player_id: 1,
+            ..Default::default()
+        }
     }
 
     #[test]

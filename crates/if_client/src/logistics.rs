@@ -480,8 +480,10 @@ mod tests {
 
     #[test]
     fn clamp_editor_closes_if_out_of_range() {
-        let mut state = LogisticsUiState::default();
-        state.editing_route = Some(5);
+        let mut state = LogisticsUiState {
+            editing_route: Some(5),
+            ..Default::default()
+        };
         state.clamp_editor();
         assert_eq!(state.editing_route, None);
 
